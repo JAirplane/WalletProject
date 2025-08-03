@@ -1,0 +1,7 @@
+HIKARI_MIN_IDLE: 30
+HIKARI_IDLE_TIMEOUT: 120000
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 100

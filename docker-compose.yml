@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:13
+    container_name: postgres
+    environment:
+      POSTGRES_DB: common_database
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5438:5432"
+    volumes:
+      - ./postgres/conf/postgres.conf:/etc/postgresql/postgres.conf
+      - pgdata:/var/lib/postgresql/data
+    command: [ "postgres", "-c", "config_file=/etc/postgresql/postgres.conf" ]
+    networks:
+      - backend
+
+  migrations:
+    build: ./db-migrations
+    depends_on:
+      - postgres
+    env_file:
+      - liquibase.env
+    networks:
+      - backend
+
+  wallet:
+    image: wallet:latest
+    container_name: wallet
+    build: .
+    depends_on:
+      - postgres
+      - migrations
+    networks:
+      - backend
+    volumes:
+      - ./config:/config
+    ports:
+      - "8080:8080"
+    environment:
+      SPRING_DATASOURCE_URL: ${POSTGRES_DB_URL}
+      SPRING_DATASOURCE_USERNAME: ${POSTGRES_USER}
+      SPRING_DATASOURCE_PASSWORD: ${POSTGRES_PASSWORD}
+      HIKARI_MIN_IDLE: ${HIKARI_MIN_IDLE:-30}
+      HIKARI_IDLE_TIMEOUT: ${HIKARI_IDLE_TIMEOUT:-120000}
+      MANAGEMENT_ENDPOINTS_WEB_EXPOSURE_INCLUDE: health,info,refresh,env,metrics
+      SPRING_CONFIG_ADDITIONAL_LOCATION: file:/config/
+
+volumes:
+  pgdata:
+
+networks:
+  backend:

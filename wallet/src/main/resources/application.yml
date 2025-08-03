@@ -1,0 +1,66 @@
+spring:
+  application:
+    name: wallet
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    generate-ddl: false
+    properties:
+      hibernate.dialect: org.hibernate.dialect.PostgreSQLDialect
+  datasource:
+    url: jdbc:postgresql://postgres:5432/common_database
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 150
+      minimum-idle: ${HIKARI_MIN_IDLE:30}
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT:120000}
+      leak-detection-threshold: 120000
+      max-lifetime: 1200000
+      connection-timeout: 5000
+      pool-name: "WalletHikariPool"
+      connection-init-sql: "SET TIME ZONE 'UTC'"
+      data-source-properties:
+        prepStmtCacheSize: 500
+        prepStmtCacheSqlLimit: 2048
+        cachePrepStmts: true
+        useServerPrepStmts: true
+
+management:
+  endpoints:
+    web:
+      base-path: /actuator
+      exposure:
+        include: health,info,refresh
+  endpoint:
+    health:
+      enabled: true
+    info:
+      enabled: true
+    refresh:
+      enabled: true
+
+wallet:
+  transaction:
+    processing:
+      max-retry: 5
+
+logging:
+  level:
+    root: DEBUG
+    org.springframework: DEBUG
+    org.hibernate: INFO
+    org.hibernate.SQL: DEBUG
+    org.hibernate.type.descriptor.sql.BasicBinder: TRACE
+    org.liquibase: INFO
+    com.airplane: DEBUG
+    net.devh.boot.grpc: DEBUG
+
+  file:
+    name: logs/users-service.log
+    max-size: 10MB
+    max-history: 7
+  pattern:
+    file: "%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger{36} - %msg%n"
+    console: "%d{HH:mm:ss} %-5level %logger{36} - %msg%n"
