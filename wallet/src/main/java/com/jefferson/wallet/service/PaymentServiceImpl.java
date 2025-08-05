@@ -2,7 +2,6 @@ package com.jefferson.wallet.service;
 
 import com.jefferson.wallet.dto.BalanceDto;
 import com.jefferson.wallet.dto.TransactionRequest;
-import com.jefferson.wallet.dto.WalletDto;
 import com.jefferson.wallet.enums.OperationType;
 import com.jefferson.wallet.exceptions.InsufficientFundsException;
 import com.jefferson.wallet.exceptions.WalletNotFoundException;
@@ -13,11 +12,8 @@ import com.jefferson.wallet.repository.WalletRepository;
 import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
-import lombok.Getter;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.validation.annotation.Validated;
@@ -32,10 +28,7 @@ import java.util.UUID;
 @Validated
 public class PaymentServiceImpl implements PaymentService {
 
-    @Getter
-    @Setter
-    @Value("${wallet.transaction.processing.max-retry}")
-    private int transactionMaxRetries;
+    private final PaymentServiceProps props;
 
     private final TransactionRepository transactionRepository;
 
@@ -43,9 +36,11 @@ public class PaymentServiceImpl implements PaymentService {
 
     @Autowired
     public PaymentServiceImpl(TransactionRepository transactionRepository,
-                          WalletRepository walletRepository) {
+                          WalletRepository walletRepository,
+                              PaymentServiceProps props) {
         this.transactionRepository = transactionRepository;
         this.walletRepository = walletRepository;
+        this.props = props;
     }
 
     @Override
@@ -58,6 +53,7 @@ public class PaymentServiceImpl implements PaymentService {
 
         int retryCount = 0;
         BalanceDto balanceDto = null;
+        final int retries = props.getMaxRetry();
         while (true) {
             try {
                 log.debug("Transaction processing try: {}. " +
@@ -70,7 +66,7 @@ public class PaymentServiceImpl implements PaymentService {
                 log.debug("Transaction optimistic locking exception. " +
                                 "WalletId: {}, Operation type: {}, Amount: {}.",
                         transactionRequest.walletId(), transactionRequest.operationType(), transactionRequest.amount());
-                if (++retryCount > transactionMaxRetries) {
+                if (++retryCount > retries) {
                     throw new RuntimeException("Too many retries, failed to process transaction", e);
                 }
             }
@@ -118,6 +114,10 @@ public class PaymentServiceImpl implements PaymentService {
         walletRepository.save(existWallet);
 
         return BalanceDto.buildBalanceDto(existWallet.getId(), existWallet.getBalance());
+    }
+
+    public Integer getTransactionMaxRetries() {
+        return props.getMaxRetry();
     }
 
     private Transaction buildTransaction(UUID walletId, OperationType operationType,

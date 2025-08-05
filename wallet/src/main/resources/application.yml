@@ -1,4 +1,8 @@
 spring:
+  config:
+    import:
+      - file:../config/application-hikari.yml
+      - optional:file:./config/application-hikari.yml
   application:
     name: wallet
   jpa:
@@ -50,6 +54,7 @@ logging:
   level:
     root: DEBUG
     org.springframework: DEBUG
+    org.springframework.boot.context.config: TRACE
     org.hibernate: INFO
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql.BasicBinder: TRACE

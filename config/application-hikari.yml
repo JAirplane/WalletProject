@@ -5,3 +5,8 @@ spring:
   datasource:
     hikari:
       maximum-pool-size: 100
+
+wallet:
+  transaction:
+    processing:
+      max-retry: 10

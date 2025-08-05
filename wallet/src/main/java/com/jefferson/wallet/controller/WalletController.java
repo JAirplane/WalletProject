@@ -69,4 +69,8 @@ public class WalletController implements WalletApi {
         return ResponseEntity.ok(balanceDto);
     }
 
+    @GetMapping("/max-retries")
+    public ResponseEntity<Integer> getMaxRetries() {
+        return ResponseEntity.ok(((PaymentServiceImpl) paymentService).getTransactionMaxRetries());
+    }
 }
